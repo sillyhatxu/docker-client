@@ -43,12 +43,28 @@ func (docker Docker) SearchImages(serviceName string) ([]dockerClient.APIImageSe
 	return imageSearchArray,nil
 }
 
-//docker service ls --filter "name=test_consul"
+
 func (docker Docker) ServiceLSFilter(serviceName string) ([]swarm.Service, error) {
+	serviceArray, err := docker.ServiceLSFilterFuzzyMatching(serviceName)
+	if err != nil {
+		return nil,err
+	}
+	var resultArray []swarm.Service
+	for _,service := range serviceArray{
+		if service.Spec.Name == serviceName{
+			resultArray = append(resultArray,service)
+		}
+	}
+	return resultArray,nil
+}
+
+//docker service ls --filter "name=test_consul"
+func (docker Docker) ServiceLSFilterFuzzyMatching(serviceName string) ([]swarm.Service, error) {
 	client, err := dockerClient.NewClient(docker.Endpoint)
 	if err != nil {
 		return nil,err
 	}
+	//check name
 	serviceArray, err := client.ListServices(dockerClient.ListServicesOptions{Filters:map[string][]string{"name":{serviceName}}})
 	if err != nil {
 		return nil,err
